@@ -8,7 +8,7 @@ public record UserProfileResponse(
         int age,
         double weightKg,
         double heightCm,
-        User.Gender gender,
+        User.Sex sex,
         User.BodyGoal bodyGoal,
         User.FitnessGoal fitnessGoal,
         User.ActivityLevel activityLevel
@@ -17,7 +17,7 @@ public record UserProfileResponse(
         return new UserProfileResponse(
                 user.getId(), user.getEmail(), user.getName(),
                 user.getAge(), user.getWeightKg(), user.getHeightCm(),
-                user.getGender(), user.getBodyGoal(), user.getFitnessGoal(),
+                user.getSex(), user.getBodyGoal(), user.getFitnessGoal(),
                 user.getActivityLevel()
         );
     }
