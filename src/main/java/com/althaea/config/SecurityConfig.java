@@ -1,4 +1,4 @@
-package com.fitfix.config;
+package com.althaea.config;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
