@@ -26,6 +26,14 @@ public class MealSuggestion {
 
     private String mealName;
 
+    /** Difficulty rating 1-5, 1 = very easy, 5 = complex */
+    private int difficultyRating;
+
+    /** Notes on any specialist ingredients needed */
+    private String specialistIngredients;
+
+    /** URL to an image of the dish */
+    private String imageUrl;
 
     /** Whether the user accepted or rejected depending on how they swiped */
     private Boolean accepted;
