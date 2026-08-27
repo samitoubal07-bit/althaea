@@ -41,5 +41,5 @@ public class MealPlan {
     private List<MealSuggestion> suggestions;
 
     @OneToMany(mappedBy = "mealPlan", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<MealSuggestion> suggestionsRejected;
+    private List<MealSuggestion> rejectedSuggestions;
 }
