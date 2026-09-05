@@ -12,35 +12,33 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
-/**  Generates a completed meal plan based off the user's data and goals */
+/** Uses Spoonacular to find recipes that match the ingredients in the users fridge. */
 @Service
 @RequiredArgsConstructor
 public class PlanGeneratorService {
 
     private final MacroCalculatorService macroCalculator;
-    private final MealSuggesterService   mealSuggester;
+    private final SpoonacularService     spoonacular;
     private final FridgeItemRepository   fridgeItemRepo;
     private final WorkoutLogRepository   workoutLogRepo;
     private final MealPlanRepository     mealPlanRepo;
 
-    /** Generates a 7-day meal plan starting from today. */
     @Transactional
     public MealPlan generateWeeklyPlan(User user) {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate   = startDate.plusDays(6);
 
-        // Load user's fridge
+        // Get ingredient names from fridge
         List<FridgeItem> fridgeItems = fridgeItemRepo.findByUser(user);
+        List<String> ingredients = fridgeItems.stream()
+                .map(FridgeItem::getName)
+                .collect(Collectors.toList());
 
-        // Load workouts for the upcoming 7 days
-        List<WorkoutLog> upcomingWorkouts = workoutLogRepo
-                .findByUserAndWorkoutDateBetween(user, startDate, endDate);
-
-        // Calculate base daily macros
+        // Calculate base macros
         MacroCalculatorService.MacroSplit baseMacros = macroCalculator.calculateMacros(user);
 
-        // Build the plan shell
         MealPlan plan = MealPlan.builder()
                 .user(user)
                 .startDate(startDate)
@@ -55,27 +53,22 @@ public class PlanGeneratorService {
                 .rejectedSuggestions(new ArrayList<>())
                 .build();
 
-        // Generate meals for each day
-        for (int i = 0; i < 7; i++) {
-            LocalDate date = startDate.plusDays(i);
+        // Fetch recipes from Spoonacular
+        List<MealSuggestion> queue = new ArrayList<>();
+        queue.addAll(spoonacular.findRecipes(user, ingredients, MealSuggestion.MealType.BREAKFAST, 3));
+        queue.addAll(spoonacular.findRecipes(user, ingredients, MealSuggestion.MealType.LUNCH, 3));
+        queue.addAll(spoonacular.findRecipes(user, ingredients, MealSuggestion.MealType.DINNER, 3));
+        queue.addAll(spoonacular.findRecipes(user, ingredients, MealSuggestion.MealType.SNACK, 3));
 
-            // Find if there's a workout this day and adjust macros accordingly
-            Optional<WorkoutLog> workoutToday = upcomingWorkouts.stream()
-                    .filter(w -> w.getWorkoutDate().equals(date))
-                    .findFirst();
-
-            MacroCalculatorService.MacroSplit dayMacros = workoutToday
-                    .map(w -> macroCalculator.calculateMacrosForWorkoutDay(user, w.getType()))
-                    .orElse(baseMacros);
-
-            // Generate meals for this day
-            List<MealSuggestion> dayMeals = mealSuggester.generateSwipeQueue(
-                user, fridgeItems, dayMacros, date);
-
-            // Link suggestions back to the plan
-            dayMeals.forEach(meal -> meal.setMealPlan(plan));
-            plan.getSuggestions().addAll(dayMeals);
+        // Set position and link to plan
+        for (int i = 0; i < queue.size(); i++) {
+            queue.get(i).setQueuePosition(i);
+            queue.get(i).setMealPlan(plan);
+            queue.get(i).setMealDate(startDate);
         }
+
+        java.util.Collections.shuffle(queue);
+        plan.getSuggestions().addAll(queue);
 
         return mealPlanRepo.save(plan);
     }

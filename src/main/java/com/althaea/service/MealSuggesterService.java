@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.util.*;
 import java.util.stream.Collectors;
 
-/** MealSuggesterService Generates a queue of 30 meal suggestions from the user's available fridge items, based off their macro targets and fitness goal. Suggestions regenerate with another 30 being added when user is halfway through the suggestions */
+/** MealSuggesterService Generates ameal suggestions from the user's available fridge items, based off their macro targets and fitness goal. */
 @Service
 public class MealSuggesterService {
     private static final int QUEUE_SIZE = 30;
@@ -284,24 +284,6 @@ public class MealSuggesterService {
             case SNACK ->
                 "1. Portion out ingredients.\n" +
                 "2. Eat within 30 minutes of training for best recovery.";
-        };
-    }
-
-    /** Generates note explaining why meal supports users goals */
-    private String buildGoalNote(User user, MealSuggestion.MealType type) {
-        String combo = user.getBodyGoal().name() + "_" + user.getFitnessGoal().name();
-
-        return switch (combo) {
-            case "CUT_FAT_LOSS"     -> "High protein preserves muscle mass while keeping you in a calorie deficit.";
-            case "CUT_MUSCLE_GAIN"  -> "High protein with moderate carbs supports muscle retention during your cut.";
-            case "CUT_ENDURANCE"    -> "Timed carbs support your cardio performance while maintaining a deficit.";
-            case "MAINTAIN_FAT_LOSS"-> "Balanced macros keep you energised without excess — ideal for body recomposition.";
-            case "MAINTAIN_MUSCLE_GAIN" -> "Adequate protein at maintenance supports steady lean mass gains.";
-            case "MAINTAIN_ENDURANCE"   -> "Carb-forward meals fuel sustained endurance output at maintenance calories.";
-            case "BULK_FAT_LOSS"    -> "High protein surplus with lower fat supports a lean bulk approach.";
-            case "BULK_MUSCLE_GAIN" -> "Calorie surplus with emphasis on protein and carbs drives muscle growth and recovery.";
-            case "BULK_ENDURANCE"   -> "High carb surplus fuels intense training volume and keeps glycogen stores topped up.";
-            default                 -> "Balanced meal supporting your fitness goals.";
         };
     }
 }
